@@ -1,0 +1,36 @@
+###############################################################################
+## The Paradrop Platform repository
+###############################################################################
+## Authors:
+##  Dale Willis (dale@paradrop.org)
+##  (developers@paradrop.org):
+##    Arkodeb Dasgupta
+##    Michael Bauer
+##    Sivasubramanian R
+###############################################################################
+
+###############################################################################
+## Getting Started:
+
+To utilize the Paradrop CLI tools, you must first register for a Paradrop
+Developer's account and have a "Paradrop Smart Router" hardware device.
+
+Please visit www.paradrop.org for more information.
+
+###############################################################################
+## Installation:
+
+Call "install.sh <devid>" to generate an environment variable script
+required to use the Paradrop CLI tools. This is a simple script
+which will help store a few variables utilized by the CLI program.
+
+###############################################################################
+## Using the CLI:
+
+Documentation for the CLI can be found here:
+    www.paradrop.org/cli_doc.php
+
+Starting the CLI:
+    python cli/pdcli.py
+
+
