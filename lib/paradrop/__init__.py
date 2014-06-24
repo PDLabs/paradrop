@@ -21,7 +21,6 @@ def install(theOut):
     """Install a new out module."""
     __builtins__.out = theOut
 
-
 def logPrefix():
     """Setup a default logPrefix for any function that doesn't overwrite it."""
     # Who called us?
@@ -151,96 +150,6 @@ class IOutput:
     """Interface class that all Output classes should inherit."""
     def __call__(self, args):
         pass
-    def __repr__(self):
-        return "REPR"
-
-class Fileout(IOutput):
-    def __init__(self, filename, truncate=False):
-        self.filename = filename
-        self.mode = None
-        if(truncate):
-            self.mode = "w"
-        else:
-            self.mode = "a"
-    def __call__(self, args):
-        try:
-            fd = open(self.filename, self.mode)
-            # Make sure args is a str type
-            if(not isinstance(args, str)):
-                args = str(args)
-            fd.write(args)
-            fd.flush()
-            fd.close()
-        except:
-            pass
-
-from lib.internal.comm.sender import PDSenderReconnect
-class NetworkOut(PDSenderReconnect):
-    """
-        Uses PDSenderReconnect to generate a client TCP connection to a message
-        server on the Paradrop network.
-        This should be used for urgent or fatal messages that need to be seen very soon
-        by the development team.
-
-        This class is expected to be called in the following way:
-        
-            In a file like pdfcd.py
-            # first import lib.paradrop with a reference
-            import lib.paradrop as PD
-            # Now you can also import paradrop *
-            from lib.paradrop import *
-            # OTHER IMPORTS GO HERE
-
-            # ... function defs, etc..
-            
-            # During init code:
-            # Now use your reference to PD to change the "out" class
-            PD.out.info = PD.Stdout(PD.Colors.INFO, [PD.NetworkOut(None, '/tmp/log')])
-            
-            # BUT WAIT it still isn't going to work yet!
-            
-            # First you have to tell it to run!
-            # This is required because since the import is the first thing to happen,
-            # the settings file (which contains the addr, port data) cannot be overwritten
-            # with args from the user (using "-s STUFF:THINGS") so after the settings are overwriten
-            # and you have a reasonable @myid, you should then call:
-            PD.out.info.other_out[0].run("MemorableID like my GUID", settings.MSG_SERVER_ADDR, settings.MSG_SERVER_PORT)
-
-            # Now everyone is happy!
-    """
-    def __init__(self, color=None, filename="/tmp/NetworkOut_LocalLog"):
-        self.color = color
-        self.filename = filename
-        self.proto = None
-        self.myid = ""
-        self.to_file = Fileout(self.filename)
-
-    def run(self, myid, addr, port):
-        #Force the reconnector class to find its own reactor by sending None here
-        self.myid = myid
-        self.addr = addr
-        self.port = port
-        PDSenderReconnect.__init__(self, None, addr, port)
-    
-    def connectionLost(self, proto, reason):
-        """@overwrite
-            This function overwrites the default stub function found in PDSender."""
-        self.proto = None
-        out.err('-- %s connectionLost to message server\n' % self.logPrefix())
-    
-    def connectionMade(self, proto):
-        """@override:
-            On connection made do this"""
-        self.proto = proto
-        out.info('-- %s Made connection to message server\n' % self.logPrefix())
-        #TODO check for log file and send it to server
-
-    def __call__(self, data):
-        msg = str(data)
-        if(self.proto):
-            self.proto.sendData("%s::%s" % (self.myid, msg))
-        else:
-            self.to_file("%s::%s" % (self.myid, msg))
                 
 class Stdout(IOutput):
     def __init__(self, color=None, other_out_types=None):
@@ -320,7 +229,6 @@ class Output():
         Currently these are the choices for Output classes:
             - StdoutOutput() : output sent to sys.stdout
             - StderrOutput() : output sent to sys.stderr
-            - FileOutput()   : output sent to filename provided
     """
             
     def __init__(self, **kwargs):
@@ -339,8 +247,6 @@ class Output():
             print('>> Adding new Output stream %s' % name)
         # WARNING you cannot call setattr() here, it would recursively call back into this function
         self.__dict__[name] = val
-    def __repr__(self):
-        return "REPR"
 
 # Create a standard out module to be used if no one overrides it
 out = Output(

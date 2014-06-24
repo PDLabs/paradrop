@@ -50,11 +50,6 @@ virtRouter.runtime = [
     "program": "@net.runtime.rule(eth1, eth0, 10.100.11.1, masq)",
   },
   {
-    "name": "webhosting",
-    "program": "uhttpd",
-    "args": "-p 80 -i .php=/usr/bin/php-cgi -h /srv/www" 
-  },
-  {
     'name': 'DHCP Server',
     'program': '@net.runtime.dhcpserver'
   }
