@@ -572,6 +572,11 @@ class ParaDropAPIClient:
             dir_resp = "Is a Directory. PutFile works only for files. Please Re-try"
             return dir_resp
 
+        hundredMB = (100 * 1024 * 1024)
+        if os.path.getsize(filePath) > hundredMB:
+            size_resp = "File size exceeded max limit (100MB). Please Re-try"
+            return size_resp
+
         fileObj = open(filePath, 'rb')
         reqSize = os.stat(filePath).st_size 
         fileName = filePath.split('/')[-1]

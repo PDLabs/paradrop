@@ -35,7 +35,7 @@ netChute.files = [
  { 
     "name":"speedtest",
     "path":"/root/test",
-    "sha1":"93f29dc9974cdcf8afd5a5071fed66315a5301cf",
+    "sha1":"cb6bddeabe64774ccfc7d0af1b415f2f214869a5",
     "location":"@paradrop.server(nettest/speedtest.tar.gz)",
     "todo":"EXTRACT"
  },
@@ -53,17 +53,11 @@ netChute.files = [
 #
 netChute.runtime = [
   {
-    "name": "Run Speedtest Script",
-    "program": "python /root/test/dumpdb.py",
-    "cron":"*/5 * * * *"
-  },
-  {
     "name": "webhosting",
     "program": "uhttpd",
     "args": "-p 80 -i .php=/usr/bin/php-cgi -h /srv/www" 
   }
 ]
-
 
 #
 # Set traffic of chute
@@ -85,7 +79,7 @@ netChute.traffic = [
 # Set resources of chute
 #
 netChute.resource = {
-  "cpu": 15,
+  "cpu": 1024,
   "memory": 53687091,
   "wan": {"down": '@resource.net.wan.down.MAX', "up": '@resource.net.wan.up.MAX'},
 }

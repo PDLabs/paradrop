@@ -55,8 +55,8 @@ seccamChute.files = [
   {
     "name":"root",
     "path":"/root",
-    "sha1":"82365b3a5e25efd7730bcbeaaedb9676a8277d8d",
-    "location":"@paradrop.chute(seccam.py)"
+    "sha1":"1633ea1d6351929cc2c8717d1611dcb41681b585",
+    "location":"@paradrop.server(seccam/seccam.py)",
   }
 ]
 
@@ -72,11 +72,6 @@ seccamChute.runtime = [
   {
     "name": "DHCP Server",
     "program": "@net.runtime.dhcpserver"
-  },
-  {
-    "name": "motiondetection",
-    "program": "@runtime.daemonize(motiond, python /root/seccam.py)",
-    "args": "-motion -m_sec 1.0 -m_save /srv/www/motionLog/motion-"
   }
 ]
 
@@ -85,11 +80,6 @@ seccamChute.runtime = [
 # Set traffic of chute
 #
 seccamChute.traffic = [
-  {
-    "name": "HosttoSecCam",
-    "description": "Allows the chute access to the host LAN",
-    "rule": "@net.traffic.redirect(wan:192.168.50.20:80, @net.host.lan:192.168.50.20:80)"
-  },
   {
     "name": "Web",
     "description": "Allows the chute to provide a webserver on WAN",
@@ -106,7 +96,7 @@ seccamChute.traffic = [
 # Set resources of chute
 #
 seccamChute.resource = {
-  "cpu": 15,
+  "cpu": 1024,
   "memory": 53687091,
   "wan": {"down": 25000, "up": 25000},
   "wifi": {"down": 25000, "up": 25000}
