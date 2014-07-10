@@ -167,7 +167,8 @@ class PDCommands:
             tty.setraw(fd)
             line = ""
             ctrl = None
-            ptr = 0
+            histptr = 0
+            chptr = 0
             while(True):
                 # Read in chars, 1 at a time
                 l = self.infd.read(1)
@@ -177,9 +178,13 @@ class PDCommands:
                     break
                 # If they hit Ctrl-C
                 elif(l == '\x03'):
-                    self.outfd('Use ^D to exit\r\n')
+                    self.outfd('\r\nUse ^D to exit\r\n')
+                    self.clearLineAndReprompt()
                     line = ""
-                    break
+                    chptr = 0
+                    histptr = 0
+                    # Do a continue so it doesn't come across as an error line by returning
+                    continue
                 # If they hit Ctrl-D
                 elif(l == '\x04'):
                     self.outfd('\r\n')
@@ -187,10 +192,19 @@ class PDCommands:
                 # If they hit backspace
                 elif(l == '\x7f'):
                     # Delete from the line, but if line is empty don't do anything
-                    if(len(line) > 0):
-                        line = line[:-1]
-                        # Move the cursor back 1 space then delete the char
-                        self.outfd('\x1b[1D\x1b[0K')
+                    if(len(line) > 0 and chptr > 0):
+                        # First move back our pointer by 1 space
+                        chptr -= 1
+                        # Then remove out the char we are deleting
+                        line = line[:chptr] + line[chptr+1:]
+                        # This uses ANSI to move the cursor back 1, then save its position
+                        self.outfd('\x1b[1D\x1b[s')
+                        # We then clear the full line out
+                        self.clearLineAndReprompt()
+                        # We deleted the line, so reprint it here
+                        self.outfd(line)
+                        # Finally, this sequence messed with where the cursor was, restore it
+                        self.outfd('\x1b[u')
                     continue
 
                 # If a control sequence is pressed (up/down/left/right arrow)
@@ -202,32 +216,57 @@ class PDCommands:
                 if(ctrl):
                     ctrl += l
                     if(len(ctrl) == 3):
-                        if(ctrl == '\x1b[A'): #Pressed up??
+                        #Pressed up
+                        if(ctrl == '\x1b[A'):
                             self.clearLineAndReprompt()
-                            ptr -= 1
+                            histptr -= 1
                             try:
-                                line = self.log[ptr]
+                                line = self.log[histptr]
+                                chptr = len(line)
                             except:
-                                ptr += 1
+                                histptr += 1
                             self.outfd(line)
-                        elif(ctrl =='\x1b[B'): #Pressed down??
+                        #Pressed down
+                        elif(ctrl =='\x1b[B'):
                             self.clearLineAndReprompt()
-                            ptr += 1
+                            histptr += 1
                             try:
-                                line = self.log[ptr]
+                                line = self.log[histptr]
+                                chptr = len(line)
                             except:
-                                ptr -= 1
+                                histptr -= 1
                             self.outfd(line)
-                        elif(ctrl =='\x1b[C'): #Pressed right?
+                        #Pressed right
+                        elif(ctrl =='\x1b[C' and chptr < len(line)):
+                            # Push the char pointer forward one
+                            chptr += 1
+                            # ANSI code for moving cursor to right
                             self.outfd("\x1b[1C")
-                        elif(ctrl =='\x1b[D'): #Pressed left
+                        #Pressed left
+                        elif(ctrl =='\x1b[D' and chptr > 0):
+                            # Push the char pointer back one
+                            chptr -= 1
+                            # ANSI code for moving cursor to left
                             self.outfd("\x1b[1D")
                         ctrl = None
                     continue
                 
                 if(echo):
                     self.outfd(l)
-                line += l
+                
+                # Save the char to the line buffer, but its special if we aren't at the end of the line
+                if(chptr != len(line)):
+                    # Save the char inside of the line buffer where required
+                    line = line[:chptr] + l + line[chptr:]
+                    chptr += 1
+                    # Now this looks really similar to backspace, save the cursor, clear the line, reprint, and restore the cursor
+                    self.outfd('\x1b[s')
+                    self.clearLineAndReprompt()
+                    self.outfd(line)
+                    self.outfd('\x1b[u')
+                else:
+                    line += l
+                    chptr += 1
 
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old)
@@ -245,7 +284,9 @@ class PDCommands:
             try:
                 self.outfd(self.prompt)
                 line = self.readline()
-                self.log.append(line)
+                # Only save the history if there is something to save
+                if(len(line) > 0):
+                    self.log.append(line)
                 self.cli.findMatch(line)
 
             except Exception as e:
